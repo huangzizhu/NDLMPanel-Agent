@@ -484,7 +484,10 @@ def _buildDirectoryTree(path: Path, currentDepth: int, maxDepth: int) -> Directo
         return node
 
     try:
-        entries = sorted(path.iterdir(), key=lambda x: (not x.is_dir(), x.name.lower()))
+        entries = sorted(
+            (e for e in path.iterdir() if e.is_dir()),
+            key=lambda x: x.name.lower(),
+        )
     except PermissionError:
         return node
 
