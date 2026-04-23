@@ -189,6 +189,8 @@ def _grepFileNames(
         findCmd.append("-maxdepth")
         findCmd.append("1")
 
+    findCmd.extend(["-type", "f"])
+
     if ignoreCase:
         findCmd.append("-iregex")
     else:
