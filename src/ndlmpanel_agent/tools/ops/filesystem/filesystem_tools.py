@@ -203,7 +203,7 @@ def _grepFileNames(
     # 解析输出
     matches: list[GrepMatch] = []
     
-    if result.returncode == 0 and result.stdout:
+    if result.stdout:
         # find 输出格式: 一行一个完整文件路径
         for lineNum, filePath in enumerate(result.stdout.strip().split("\n"), 1):
             if not filePath:
