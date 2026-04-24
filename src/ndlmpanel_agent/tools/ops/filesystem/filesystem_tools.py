@@ -76,8 +76,8 @@ def listDirectory(targetPath: str) -> list[FileInfo]:
     results: list[FileInfo] = []
     try:
         entries = sorted(
-            (e for e in path.iterdir() if e.is_dir()),
-            key=lambda x: x.name.lower(),
+            path.iterdir(),
+            key=lambda x: (not x.is_dir(), x.name.lower()),
         )
     except PermissionError:
         raise PermissionDeniedException(f"无权访问目录: {targetPath}")
@@ -487,8 +487,8 @@ def _buildDirectoryTree(path: Path, currentDepth: int, maxDepth: int) -> Directo
 
     try:
         entries = sorted(
-            (e for e in path.iterdir() if e.is_dir()),
-            key=lambda x: x.name.lower(),
+            path.iterdir(),
+            key=lambda x: (not x.is_dir(), x.name.lower()),
         )
     except PermissionError:
         return node
@@ -508,15 +508,15 @@ def getDirectoryTree(targetPath: str, maxDepth: int = 1) -> DirectoryTreeResult:
     _requireExists(path, "目录")
     if not path.is_dir():
         raise ToolExecutionException(f"目标不是目录: {targetPath}")
-    if maxDepth < 1:
-        raise ToolExecutionException(f"递归深度必须大于0: {maxDepth}")
+    # 限制最大递归深度为5，确保深度在有效范围内
+    effectiveMaxDepth = max(1, min(maxDepth, 5))
 
     try:
-        tree = _buildDirectoryTree(path, 0, maxDepth)
+        tree = _buildDirectoryTree(path, 0, effectiveMaxDepth)
         return DirectoryTreeResult(
             success=True,
             rootPath=str(path.resolve()),
-            maxDepth=maxDepth,
+            maxDepth=effectiveMaxDepth,
             tree=tree,
         )
     except PermissionError:
