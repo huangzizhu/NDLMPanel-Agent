@@ -84,19 +84,48 @@ def getDatabaseStatus(databaseType: str = "mysql") -> DatabaseStatus:
     )
 # 测试 root 账户连接 MySQL
 def testMysqlConnection(host, port, username, password):
-    pass
+    cmd = [
+        "mysqladmin",
+        "-h", str(host),
+        "-P", str(port),
+        "-u", username,
+        f"-p{password}",
+        "ping",
+    ]
+
+    result = runCommand(cmd,checkReturnCode=False,timeout=5)
+
+    is_connectable = result.returncode == 0 and "is alive" in result.stdout.lower()
+
+    if is_connectable:
+        return {
+            "isConnectable":True,
+            "host":host,
+            "port":port,
+            "username":username,
+        }
+    errorMessage = result.stderr.strip() or result.stdout.strip()
+    return{
+        "isConnectable":False,
+        "host":host,
+        "port":port,
+        "username":username,
+        "errorMessage":errorMessage,
+    }
 # 创建 MySQL 数据库
 def _validateMysqlIdentifier(name:str, fieldName:str = "名称") -> str:
     if not re.match(r"^[a-zA-Z_][a-zA-Z0-9_]*$", name):
         raise ToolExecutionException(f"{fieldName} '{name}' 不合法。必须以字母或下划线开头，后续字符只能是字母、数字或下划线。")
     return name
-def _escapeMysqlIdentifier(name:str)->str:
-    return name.replace("\\", "\\\\").replace("'", "\\'")
+def _escapeMysqlString(value: str) -> str:
+    """转义 MySQL 字符串字面量中的特殊字符，用于 '...' 内部"""
+    return value.replace("\\", "\\\\").replace("'", "\\'")
+
 def createMysqlDatabase(dbName):
     dbName = _validateMysqlIdentifier(dbName,"数据库名称")
 
     sql = (
-        f"CREATE DATABASE IF NOT EXISTS'{dbName}'"
+        f"CREATE DATABASE IF NOT EXISTS `{dbName}`"
         " CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;"
     )
     result = runCommand(
@@ -110,7 +139,7 @@ def createMysqlDatabase(dbName):
         raise ToolExecutionException(f"创建数据库失败: {errorMessage}")
     
     return {
-        "daName":dbName,
+        "dbName":dbName,
         "charset":"utf8mb4",
         "collation":"utf8mb4_general_ci",
         "isCreated":True,
@@ -120,7 +149,7 @@ def createMysqlDatabase(dbName):
 def createMysqlUserAndGrant(dbName, username, password):
     dbName = _validateMysqlIdentifier(dbName,"数据库名称")
     username = _validateMysqlIdentifier(username,"用户名")
-    escapePassword = _escapeMysqlIdentifier(password)
+    escapePassword = _escapeMysqlString(password)
 
     sql = (
         f"CREATE USER IF NOT EXISTS '{username}'@'localhost' "
