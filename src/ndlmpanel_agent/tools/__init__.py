@@ -31,12 +31,18 @@ from ndlmpanel_agent.tools.ops.firewall.firewall_tools import (
 from ndlmpanel_agent.tools.ops.misc.log_tools import querySystemLogs
 from ndlmpanel_agent.tools.ops.network.network_tools import checkPortConnectivity, pingHost
 from ndlmpanel_agent.tools.ops.misc.nginx_tools import (
+    applySslCertificate,
     checkNginxInstalled,
+    configSslForNginx,
     createNginxSite,
+    deleteNginxSite,
     generateProxyConfig,
     generateStaticSiteConfig,
+    getNginxSiteList,
     getNginxStatus,
     reloadNginx,
+    renewSslCertificate,
+    restartNginx,
     saveNginxConfig,
     testNginxConfig,
 )
@@ -123,7 +129,13 @@ __all__ = [
     "saveNginxConfig",
     "testNginxConfig",
     "reloadNginx",
+    "restartNginx",
     "createNginxSite",
+    "getNginxSiteList",
+    "deleteNginxSite",
+    "applySslCertificate",
+    "configSslForNginx",
+    "renewSslCertificate",
     # 数据库
     "checkDatabaseInstalled",
     "getDatabaseStatus",

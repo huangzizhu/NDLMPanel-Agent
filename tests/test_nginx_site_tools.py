@@ -97,11 +97,25 @@ def testCreateNginxReverseProxySiteWritesProxyConfig(monkeypatch):
     config = installedFiles[configPath]
     assert "listen 8080;" in config
     assert "server_name api.example.com;" in config
+    assert "location /.well-known/acme-challenge/" in config
+    assert "root /var/www/api.example.com;" in config
     assert "proxy_pass http://127.0.0.1:3000;" in config
     assert "proxy_set_header Host $host;" in config
     assert "proxy_set_header X-Real-IP $remote_addr;" in config
     assert "proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;" in config
     assert "proxy_set_header X-Forwarded-Proto $scheme;" in config
+
+
+def testGenerateProxyConfigDefaultsToPort80():
+    config = nginx_tools.generateProxyConfig(
+        domain="api.example.com",
+        proxyPass="http://127.0.0.1:3000",
+    )
+
+    assert "listen 80;" in config
+    assert "server_name api.example.com;" in config
+    assert "location /.well-known/acme-challenge/" in config
+    assert "proxy_pass http://127.0.0.1:3000;" in config
 
 
 def testCreateNginxSiteRollsBackConfigWhenNginxTestFails(monkeypatch):
@@ -147,3 +161,108 @@ def testCreateNginxSiteRejectsMissingModeSpecificArguments(monkeypatch):
             listenPort=80,
             rootPath="/var/www/example.com",
         )
+
+
+def testGetNginxSiteListReturnsEnabledSites(monkeypatch, tmp_path):
+    enabledDir = tmp_path / "sites-enabled"
+    enabledDir.mkdir()
+    monkeypatch.setattr(nginx_tools, "SITES_ENABLED_DIR", enabledDir)
+
+    (enabledDir / "example.com.conf").write_text(
+        """server {
+    listen 80;
+    server_name example.com;
+    root /var/www/example.com;
+}
+""",
+        encoding="utf-8",
+    )
+    (enabledDir / "api.example.com.conf").write_text(
+        """server {
+    listen 8080;
+    server_name api.example.com;
+    location / {
+        proxy_pass http://127.0.0.1:3000;
+    }
+}
+""",
+        encoding="utf-8",
+    )
+
+    sites = nginx_tools.getNginxSiteList()
+
+    assert sites == [
+        {
+            "configName": "api.example.com.conf",
+            "configPath": str(enabledDir / "api.example.com.conf"),
+            "domain": "api.example.com",
+            "listen": "8080",
+            "mode": "reverse_proxy",
+            "rootPath": None,
+            "proxyPass": "http://127.0.0.1:3000",
+            "isEnabled": True,
+        },
+        {
+            "configName": "example.com.conf",
+            "configPath": str(enabledDir / "example.com.conf"),
+            "domain": "example.com",
+            "listen": "80",
+            "mode": "static",
+            "rootPath": "/var/www/example.com",
+            "proxyPass": None,
+            "isEnabled": True,
+        },
+    ]
+
+
+def testGetNginxSiteListReturnsEmptyWhenDirectoryMissing(monkeypatch, tmp_path):
+    monkeypatch.setattr(nginx_tools, "SITES_ENABLED_DIR", tmp_path / "missing")
+
+    assert nginx_tools.getNginxSiteList() == []
+
+
+def testDeleteNginxSiteRemovesConfigTestsThenReloads(monkeypatch, tmp_path):
+    enabledDir = tmp_path / "sites-enabled"
+    enabledDir.mkdir()
+    configPath = enabledDir / "example.com.conf"
+    configPath.write_text("server {}", encoding="utf-8")
+    monkeypatch.setattr(nginx_tools, "SITES_ENABLED_DIR", enabledDir)
+
+    commands = []
+
+    def fakeRunCommand(command, timeout=30, checkReturnCode=True, useSudo=False):
+        commands.append(
+            {
+                "command": command,
+                "useSudo": useSudo,
+            }
+        )
+        if command[:2] == ["rm", "-f"]:
+            configPath.unlink()
+        return subprocess.CompletedProcess(command, 0, stdout="", stderr="")
+
+    monkeypatch.setattr(nginx_tools, "runCommand", fakeRunCommand)
+
+    result = nginx_tools.deleteNginxSite("example.com")
+
+    assert result == {
+        "configName": "example.com",
+        "configPath": str(configPath),
+        "isDeleted": True,
+        "isReloaded": True,
+    }
+    assert [item["command"] for item in commands] == [
+        ["rm", "-f", str(configPath)],
+        ["nginx", "-t"],
+        ["systemctl", "reload", "nginx"],
+    ]
+    assert all(item["useSudo"] for item in commands)
+
+
+def testDeleteNginxSiteRejectsMissingConfig(monkeypatch, tmp_path):
+    enabledDir = tmp_path / "sites-enabled"
+    enabledDir.mkdir()
+    monkeypatch.setattr(nginx_tools, "SITES_ENABLED_DIR", enabledDir)
+
+    with pytest.raises(ToolExecutionException):
+        nginx_tools.deleteNginxSite("missing.example.com")
