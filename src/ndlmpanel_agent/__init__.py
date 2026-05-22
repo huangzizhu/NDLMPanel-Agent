@@ -79,6 +79,7 @@ from ndlmpanel_agent.tools import (
     getDatabaseStatus,
     getDiskInfo,
     getDockerContainers,
+    getDockerImageList,
     getDirectoryTree,
     getEnvironmentVariables,
     getFirewallStatus,
@@ -104,6 +105,7 @@ from ndlmpanel_agent.tools import (
     listUsers,
     manageSystemService,
     pingHost,
+    pullDockerImage,
     querySystemLogs,
     readTextFile,
     removeFirewallPort,
@@ -168,6 +170,8 @@ ALL_TOOL_FUNCTIONS = [
     # Docker
     checkDockerInstalled,
     getDockerContainers,
+    getDockerImageList,
+    pullDockerImage,
     # Nginx
     checkNginxInstalled,
     getNginxStatus,
@@ -286,6 +290,8 @@ __all__ = [
     # Docker
     "checkDockerInstalled",
     "getDockerContainers",
+    "getDockerImageList",
+    "pullDockerImage",
     # Nginx
     "checkNginxInstalled",
     "getNginxStatus",

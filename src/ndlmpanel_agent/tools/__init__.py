@@ -1,8 +1,17 @@
 from ndlmpanel_agent.tools.ops.misc.database_tools import (
     checkDatabaseInstalled,
     getDatabaseStatus,
+    testMysqlConnection,
+    createMysqlDatabase,
+    createMysqlUserAndGrant,
+    getMysqlDatabaseList
 )
-from ndlmpanel_agent.tools.ops.misc.docker_tools import checkDockerInstalled, getDockerContainers
+from ndlmpanel_agent.tools.ops.misc.docker_tools import (
+    checkDockerInstalled,
+    getDockerContainers,
+    getDockerImageList,
+    pullDockerImage,
+)
 from ndlmpanel_agent.tools.ops.filesystem.filesystem_tools import (
     changeOwner,
     changePermissions,
@@ -121,6 +130,8 @@ __all__ = [
     # Docker
     "checkDockerInstalled",
     "getDockerContainers",
+    "pullDockerImage",
+    "getDockerImageList",
     # Nginx
     "checkNginxInstalled",
     "getNginxStatus",
@@ -139,6 +150,10 @@ __all__ = [
     # 数据库
     "checkDatabaseInstalled",
     "getDatabaseStatus",
+    "testMysqlConnection",
+    "createMysqlDatabase",
+    "createMysqlUserAndGrant",
+    "getMysqlDatabaseList",
     # 服务管理
     "manageSystemService",
 ]

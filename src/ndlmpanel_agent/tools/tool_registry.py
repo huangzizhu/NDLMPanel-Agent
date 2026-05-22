@@ -58,6 +58,7 @@ RISK_LEVEL_MAP: dict[str, ToolRiskLevel] = {
     "getSystemVersion": ToolRiskLevel.READ_ONLY,
     "getUptime": ToolRiskLevel.READ_ONLY,
     "checkDockerInstalled": ToolRiskLevel.READ_ONLY,
+    "getDockerImageList": ToolRiskLevel.READ_ONLY,
     "getDockerContainers": ToolRiskLevel.READ_ONLY,
     "checkNginxInstalled": ToolRiskLevel.READ_ONLY,
     "getNginxStatus": ToolRiskLevel.READ_ONLY,
@@ -72,6 +73,7 @@ RISK_LEVEL_MAP: dict[str, ToolRiskLevel] = {
     "readTextFile": ToolRiskLevel.READ_ONLY,
     # ── Layer 2: 受控操作（WRITE）──────────────────────────────────────────
     # 有副作用但相对可逆，SafetyGuard 可放行但记录日志
+    "pullDockerImage": ToolRiskLevel.WRITE,
     "createFile": ToolRiskLevel.WRITE,
     "createDirectory": ToolRiskLevel.WRITE,
     "renameFileOrDirectory": ToolRiskLevel.WRITE,
