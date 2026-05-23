@@ -1,0 +1,12 @@
+{
+	"folders": [
+		{
+			"path": "../../../../../.."
+		},
+		{
+			"name": "NDLMPanel-Agent",
+			"path": "../../../../.."
+		}
+	],
+	"settings": {}
+}

@@ -82,3 +82,99 @@ def getDatabaseStatus(databaseType: str = "mysql") -> DatabaseStatus:
         currentConnections=currentConnections,
         slowQueryCount=slowQueryCount,
     )
+# 测试 root 账户连接 MySQL
+def testMysqlConnection(host, port, username, password):
+    cmd = [
+        "mysqladmin",
+        "-h", str(host),
+        "-P", str(port),
+        "-u", username,
+        f"-p{password}",
+        "ping",
+    ]
+
+    result = runCommand(cmd,checkReturnCode=False,timeout=5)
+
+    is_connectable = result.returncode == 0 and "is alive" in result.stdout.lower()
+
+    if is_connectable:
+        return {
+            "isConnectable":True,
+            "host":host,
+            "port":port,
+            "username":username,
+        }
+    errorMessage = result.stderr.strip() or result.stdout.strip()
+    return{
+        "isConnectable":False,
+        "host":host,
+        "port":port,
+        "username":username,
+        "errorMessage":errorMessage,
+    }
+# 创建 MySQL 数据库
+def _validateMysqlIdentifier(name:str, fieldName:str = "名称") -> str:
+    if not re.match(r"^[a-zA-Z_][a-zA-Z0-9_]*$", name):
+        raise ToolExecutionException(f"{fieldName} '{name}' 不合法。必须以字母或下划线开头，后续字符只能是字母、数字或下划线。")
+    return name
+def _escapeMysqlString(value: str) -> str:
+    """转义 MySQL 字符串字面量中的特殊字符，用于 '...' 内部"""
+    return value.replace("\\", "\\\\").replace("'", "\\'")
+
+def createMysqlDatabase(dbName):
+    dbName = _validateMysqlIdentifier(dbName,"数据库名称")
+
+    sql = (
+        f"CREATE DATABASE IF NOT EXISTS `{dbName}`"
+        " CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;"
+    )
+    result = runCommand(
+        ["mysql","-e",sql],
+        useSudo=True,
+        checkReturnCode=False,
+    )
+
+    if result.returncode != 0:
+        errorMessage = result.stderr.strip() or result.stdout.strip()
+        raise ToolExecutionException(f"创建数据库失败: {errorMessage}")
+    
+    return {
+        "dbName":dbName,
+        "charset":"utf8mb4",
+        "collation":"utf8mb4_general_ci",
+        "isCreated":True,
+    }
+
+# 创建 MySQL 用户并授权指定数据库
+def createMysqlUserAndGrant(dbName, username, password):
+    dbName = _validateMysqlIdentifier(dbName,"数据库名称")
+    username = _validateMysqlIdentifier(username,"用户名")
+    escapePassword = _escapeMysqlString(password)
+
+    sql = (
+        f"CREATE USER IF NOT EXISTS '{username}'@'localhost' "
+        f"IDENTIFIED BY '{escapePassword}'; "
+        f"ALTER USER '{username}'@'localhost' IDENTIFIED BY '{escapePassword}'; "
+        f"GRANT ALL PRIVILEGES ON `{dbName}`.* TO '{username}'@'localhost'; "
+        "FLUSH PRIVILEGES;"
+    )
+    result = runCommand(
+        ["mysql","-e",sql],
+        useSudo=True,
+        checkReturnCode=False,
+    )
+
+    if result.returncode != 0:
+        errorMessage = result.stderr.strip() or result.stdout.strip()
+        raise ToolExecutionException(f"创建用户或授权失败: {errorMessage}")
+    return {
+        "dbName":dbName,
+        "username":username,
+        "host":'localhost',
+        "privileges":"ALL PRIVILEGES",
+        "isGranted":True,
+        "isCreated":True,
+    }
+# 获取所有数据库列表
+def getMysqlDatabaseList():
+    pass
