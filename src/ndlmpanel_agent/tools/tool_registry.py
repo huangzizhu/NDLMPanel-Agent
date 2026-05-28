@@ -58,9 +58,17 @@ RISK_LEVEL_MAP: dict[str, ToolRiskLevel] = {
     "getSystemVersion": ToolRiskLevel.READ_ONLY,
     "getUptime": ToolRiskLevel.READ_ONLY,
     "checkDockerInstalled": ToolRiskLevel.READ_ONLY,
+    "getDockerImageList": ToolRiskLevel.READ_ONLY,
     "getDockerContainers": ToolRiskLevel.READ_ONLY,
+    "getDockerContainerList": ToolRiskLevel.READ_ONLY,
+    "getDockerContainerLogs": ToolRiskLevel.READ_ONLY,
+    "getDockerContainerInfo": ToolRiskLevel.READ_ONLY,
     "checkNginxInstalled": ToolRiskLevel.READ_ONLY,
     "getNginxStatus": ToolRiskLevel.READ_ONLY,
+    "generateStaticSiteConfig": ToolRiskLevel.READ_ONLY,
+    "generateProxyConfig": ToolRiskLevel.READ_ONLY,
+    "testNginxConfig": ToolRiskLevel.READ_ONLY,
+    "getNginxSiteList": ToolRiskLevel.READ_ONLY,
     "checkDatabaseInstalled": ToolRiskLevel.READ_ONLY,
     "getDatabaseStatus": ToolRiskLevel.READ_ONLY,
     "getDirectoryTree": ToolRiskLevel.READ_ONLY,
@@ -68,6 +76,10 @@ RISK_LEVEL_MAP: dict[str, ToolRiskLevel] = {
     "readTextFile": ToolRiskLevel.READ_ONLY,
     # ── Layer 2: 受控操作（WRITE）──────────────────────────────────────────
     # 有副作用但相对可逆，SafetyGuard 可放行但记录日志
+    "pullDockerImage": ToolRiskLevel.WRITE,
+    "startDockerContainer": ToolRiskLevel.WRITE,
+    "stopDockerContainer": ToolRiskLevel.WRITE,
+    "restartDockerContainer": ToolRiskLevel.WRITE,
     "createFile": ToolRiskLevel.WRITE,
     "createDirectory": ToolRiskLevel.WRITE,
     "renameFileOrDirectory": ToolRiskLevel.WRITE,
@@ -79,6 +91,20 @@ RISK_LEVEL_MAP: dict[str, ToolRiskLevel] = {
     "writeTextFile": ToolRiskLevel.WRITE,
     # ── Layer 3: 高危操作（DANGEROUS）─────────────────────────────────────
     # 不可逆或影响系统安全，SafetyGuard 会要求人工确认
+    "saveNginxConfig": ToolRiskLevel.DANGEROUS,
+    "reloadNginx": ToolRiskLevel.DANGEROUS,
+    "restartNginx": ToolRiskLevel.DANGEROUS,
+    "createNginxSite": ToolRiskLevel.DANGEROUS,
+    "deleteNginxSite": ToolRiskLevel.DANGEROUS,
+    "applySslCertificate": ToolRiskLevel.DANGEROUS,
+    "configSslForNginx": ToolRiskLevel.DANGEROUS,
+    "renewSslCertificate": ToolRiskLevel.DANGEROUS,
+    "createDockerContainer": ToolRiskLevel.DANGEROUS,
+    "deleteDockerContainer": ToolRiskLevel.DANGEROUS,
+    "updateContainerEnv": ToolRiskLevel.DANGEROUS,
+    "updateContainerPorts": ToolRiskLevel.DANGEROUS,
+    "updateContainerVolumes": ToolRiskLevel.DANGEROUS,
+    "reCreateDockerContainer": ToolRiskLevel.DANGEROUS,
     "killProcess": ToolRiskLevel.DANGEROUS,
     "deleteFile": ToolRiskLevel.DANGEROUS,
     "deleteDirectory": ToolRiskLevel.DANGEROUS,
@@ -131,9 +157,15 @@ def _annotation_to_json_schema(annotation: Any) -> dict:
     origin = get_origin(annotation)  # 获取泛型基类，如 list、Union
     args = get_args(annotation)  # 获取泛型参数，如 (str, NoneType)
 
-    # list[X] → array
+    # list[X] → array，OpenAI function calling 需要显式 items
     if origin is list:
-        return {"type": "array"}
+        item_schema: dict[str, Any] = {"type": "string"}
+        if args:
+            item_schema = _annotation_to_json_schema(args[0])
+        return {
+            "type": "array",
+            "items": item_schema,
+        }
 
     # Python 3.10+ 的 X | Y 语法（types.UnionType）
     # 以及 typing.Union[X, None]（Optional[X]）

@@ -22,8 +22,8 @@ class LLMConfiguration(BaseModel):
 
     api_key: str = ""
     base_url: str = ""
-    model_name: str = "deepseek-chat"
-    max_tokens: int = 65536
+    model_name: str = ""
+    max_tokens: int = 655360
     temperature: float = 0.7
 
 
@@ -38,7 +38,7 @@ class SafetyConfiguration(BaseModel):
 class ContextConfiguration(BaseModel):
     """对话上下文管理配置"""
 
-    max_context_tokens: int = 32000
+    max_context_tokens: int = 62000
     session_ttl_seconds: int = 1800
     default_system_prompt: str = (
         "你是一个专业的 Linux 运维助手，名叫 NDLM。\n"
@@ -81,6 +81,7 @@ class AgentConfiguration(BaseSettings):
         "env_file": ".env",
         "env_file_encoding": "utf-8",
         "env_nested_delimiter": "_",
+        "env_nested_max_split": 1,
         "extra": "ignore",
     }
 

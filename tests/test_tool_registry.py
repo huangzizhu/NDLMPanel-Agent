@@ -46,7 +46,7 @@ def info(msg: str) -> None:
 def test_schema_generation(registry: ToolRegistry) -> None:
     section("阶段 1：Schema 生成验证")
 
-    schema_list = registry.get_tools_schema()
+    schema_list = registry.getToolsSchema()
 
     # 1.1 数量检查
     tool_count = len(schema_list)
@@ -123,7 +123,7 @@ def test_schema_generation(registry: ToolRegistry) -> None:
         ("deleteFile", ToolRiskLevel.DANGEROUS),
     ]
     for name, expected_risk in checks:
-        defn = registry.get_definition(name)
+        defn = registry.getDefinition(name)
         if defn is None:
             fail(f"{name} 的 definition 未找到")
         elif defn.risk_level == expected_risk:
@@ -132,12 +132,12 @@ def test_schema_generation(registry: ToolRegistry) -> None:
             fail(f"{name}: 期望 {expected_risk.value}，实际 {defn.risk_level.value}")
 
     # 1.4 缓存验证（两次调用应返回同一个对象）
-    schema1 = registry.get_tools_schema()
-    schema2 = registry.get_tools_schema()
+    schema1 = registry.getToolsSchema()
+    schema2 = registry.getToolsSchema()
     if schema1 is schema2:
-        ok("get_tools_schema() 结果已缓存（同一个对象）")
+        ok("getToolsSchema() 结果已缓存（同一个对象）")
     else:
-        fail("get_tools_schema() 未缓存，每次返回新对象（性能问题）")
+        fail("getToolsSchema() 未缓存，每次返回新对象（性能问题）")
 
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -243,13 +243,13 @@ async def test_error_handling(registry: ToolRegistry) -> None:
     else:
         fail(f"空参数字符串处理失败: {result.error_message}")
 
-    # 3.5 get_definition 查不存在的工具
-    print("\n  [get_definition 未知工具]")
-    defn = registry.get_definition("unknownTool")
+    # 3.5 getDefinition 查不存在的工具
+    print("\n  [getDefinition 未知工具]")
+    defn = registry.getDefinition("unknownTool")
     if defn is None:
-        ok("get_definition 未知工具正确返回 None")
+        ok("getDefinition 未知工具正确返回 None")
     else:
-        fail(f"get_definition 应返回 None，实际返回: {defn}")
+        fail(f"getDefinition 应返回 None，实际返回: {defn}")
 
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -263,7 +263,7 @@ async def main() -> None:
 
     # 初始化注册中心（模拟 AgentOrchestrator 初始化时的行为）
     registry = ToolRegistry(ALL_TOOL_FUNCTIONS)
-    info(f"已注册工具: {registry.registered_tool_names()[:5]}...（共 {len(registry.registered_tool_names())} 个）")
+    info(f"已注册工具: {registry.registeredToolNames()[:5]}...（共 {len(registry.registeredToolNames())} 个）")
 
     test_schema_generation(registry)
     await test_tool_execution(registry)

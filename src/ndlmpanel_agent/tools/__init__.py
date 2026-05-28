@@ -1,8 +1,29 @@
 from ndlmpanel_agent.tools.ops.misc.database_tools import (
     checkDatabaseInstalled,
+    createMysqlDatabase,
+    createMysqlUserAndGrant,
     getDatabaseStatus,
+    getMysqlDatabaseList,
+    testMysqlConnection,
 )
-from ndlmpanel_agent.tools.ops.misc.docker_tools import checkDockerInstalled, getDockerContainers
+from ndlmpanel_agent.tools.ops.misc.docker_tools import (
+    checkDockerInstalled,
+    createDockerContainer,
+    deleteDockerContainer,
+    getDockerContainerInfo,
+    getDockerContainerList,
+    getDockerContainerLogs,
+    getDockerContainers,
+    getDockerImageList,
+    pullDockerImage,
+    reCreateDockerContainer,
+    restartDockerContainer,
+    startDockerContainer,
+    stopDockerContainer,
+    updateContainerEnv,
+    updateContainerPorts,
+    updateContainerVolumes,
+)
 from ndlmpanel_agent.tools.ops.filesystem.filesystem_tools import (
     changeOwner,
     changePermissions,
@@ -30,7 +51,22 @@ from ndlmpanel_agent.tools.ops.firewall.firewall_tools import (
 )
 from ndlmpanel_agent.tools.ops.misc.log_tools import querySystemLogs
 from ndlmpanel_agent.tools.ops.network.network_tools import checkPortConnectivity, pingHost
-from ndlmpanel_agent.tools.ops.misc.nginx_tools import checkNginxInstalled, getNginxStatus
+from ndlmpanel_agent.tools.ops.misc.nginx_tools import (
+    applySslCertificate,
+    checkNginxInstalled,
+    configSslForNginx,
+    createNginxSite,
+    deleteNginxSite,
+    generateProxyConfig,
+    generateStaticSiteConfig,
+    getNginxSiteList,
+    getNginxStatus,
+    reloadNginx,
+    renewSslCertificate,
+    restartNginx,
+    saveNginxConfig,
+    testNginxConfig,
+)
 from ndlmpanel_agent.tools.ops.process.process_tools import (
     autoCleanProcesses,
     batchKillProcesses,
@@ -106,12 +142,42 @@ __all__ = [
     # Docker
     "checkDockerInstalled",
     "getDockerContainers",
+    "pullDockerImage",
+    "getDockerImageList",
+    "createDockerContainer",
+    "startDockerContainer",
+    "stopDockerContainer",
+    "restartDockerContainer",
+    "deleteDockerContainer",
+    "getDockerContainerList",
+    "getDockerContainerLogs",
+    "getDockerContainerInfo",
+    "updateContainerEnv",
+    "updateContainerPorts",
+    "updateContainerVolumes",
+    "reCreateDockerContainer",
     # Nginx
     "checkNginxInstalled",
     "getNginxStatus",
+    "generateStaticSiteConfig",
+    "generateProxyConfig",
+    "saveNginxConfig",
+    "testNginxConfig",
+    "reloadNginx",
+    "restartNginx",
+    "createNginxSite",
+    "getNginxSiteList",
+    "deleteNginxSite",
+    "applySslCertificate",
+    "configSslForNginx",
+    "renewSslCertificate",
     # 数据库
     "checkDatabaseInstalled",
     "getDatabaseStatus",
+    "testMysqlConnection",
+    "createMysqlDatabase",
+    "createMysqlUserAndGrant",
+    "getMysqlDatabaseList",
     # 服务管理
     "manageSystemService",
 ]
