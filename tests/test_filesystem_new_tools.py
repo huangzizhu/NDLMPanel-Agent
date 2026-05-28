@@ -129,6 +129,11 @@ def testGetDirectoryTree(testRoot: Path):
         childNames = [c.fileName for c in result.tree.children]
         print(f"      → 深度1子项: {childNames}")
         assert "subdir" in childNames, "应包含 subdir"
+        # 检查文件也都被包含
+        assert "a.txt" in childNames, "应包含 a.txt"
+        assert "b.py" in childNames, "应包含 b.py"
+        assert "binary.bin" in childNames, "应包含 binary.bin"
+        assert "emptydir" in childNames, "应包含 emptydir"
         subdirNode = next(c for c in result.tree.children if c.fileName == "subdir")
         assert len(subdirNode.children) == 0, "深度1时subdir不应有子节点"
 
@@ -138,6 +143,7 @@ def testGetDirectoryTree(testRoot: Path):
         childNames = [c.fileName for c in subdirNode.children]
         print(f"      → 深度2 subdir子项: {childNames}")
         assert "deep" in childNames, "深度2时应包含 deep"
+        assert "c.txt" in childNames, "深度2时应包含 c.txt"
         deepNode = next(c for c in subdirNode.children if c.fileName == "deep")
         assert len(deepNode.children) == 0, "深度2时deep不应有子节点"
 
@@ -149,7 +155,14 @@ def testGetDirectoryTree(testRoot: Path):
         print(f"      → 深度3 deep子项: {childNames}")
         assert "d.txt" in childNames, "深度3时应包含 d.txt"
 
-    _expectFail(M, "深度0应报错", lambda: getDirectoryTree(str(testRoot), maxDepth=0))
+    result = _run(M, "深度0应使用1", lambda: getDirectoryTree(str(testRoot), maxDepth=0))
+    if result:
+        assert result.maxDepth == 1, "深度0应使用1"
+    
+    result = _run(M, "深度6应使用5", lambda: getDirectoryTree(str(testRoot), maxDepth=6))
+    if result:
+        assert result.maxDepth == 5, "深度6应使用5"
+    
     _expectFail(M, "不存在的目录", lambda: getDirectoryTree("/nonexistent_path_xyz", maxDepth=1), ResourceNotFoundException)
     _expectFail(M, "传入文件路径应报错", lambda: getDirectoryTree(str(testRoot / "a.txt"), maxDepth=1))
 
